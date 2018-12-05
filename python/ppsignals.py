@@ -29,6 +29,23 @@ def poly_to_phase(poly, N, tstart=None, dt=1.):
 def wrap_phase(phase):
     return phase - np.round(phase)
 
+def phase_diff(phase, delay=1):
+    phase_d = phase[:-delay] - phase[delay:]
+    return wrap_phase(phase_d)
+
+def centered_phase(in_data):
+    if np.iscomplexobj(in_data):
+        sig = in_data
+        phase = sig_to_phase(in_data)
+    else:
+        sig = phase_to_sig(in_data)
+        phase = in_data.copy()
+    mean_phase = np.angle(np.mean(sig))/(2.*np.pi)
+    phase -= mean_phase
+    phase = wrap_phase(phase)
+    phase += mean_phase
+    return phase
+
 
 def unalias_poly(poly):
     """
@@ -39,8 +56,6 @@ def unalias_poly(poly):
     mapping the polynomial to some polynomial within a tessalating region
     for the lattice. This maps it to the hyper prism:
     intersection of -0.5/m! to 0.5/m! where m is the order of the coefficient.
-    I prefer this method over unalias_poly because the region is simpler to
-    describe.
 
     For a discussion see Chapter 7 of:
     McKilliam, Lattice theory, circular statistics and polynomial phase
