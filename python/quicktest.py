@@ -7,7 +7,9 @@ import basic
 N = 11
 the_poly = np.array([0.01, 0.2, 0.3])
 the_poly = np.array([0.2, 0.3])
-unwrapped_phase = np.polyval(the_poly, N)
+tt = ppsignal.sample_times(N)
+unwrapped_phase = np.polyval(tt, the_poly, N)
+
 print(unwrapped_phase)
 
 wrapped_phase = ppsignals.wrap_phase(unwrapped_phase)

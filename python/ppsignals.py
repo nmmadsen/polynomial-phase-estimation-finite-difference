@@ -26,6 +26,11 @@ def poly_to_phase(poly, N, tstart=None, dt=1.):
     phase = wrap_phase(phase)
     return phase
 
+def unwrapped_phase_to_poly(phase, N, order, tstart=None, dt=1.):
+    tt = sample_times(N, tstart, dt)
+    poly = np.polyfit(tt, phase, order)
+    return poly
+
 def wrap_phase(phase):
     return phase - np.round(phase)
 
