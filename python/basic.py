@@ -18,6 +18,8 @@ def unwrap(phase, num_differences=1, center_phase=True):
         
 
 def poly_est(phase, order, num_differences=1, center_phase=True):
+    N = len(phase)
     unwrapped = unwrap(phase, num_differences, center_phase)
-    poly_est = ppsignals
+    tt = ppsignals.sample_times(N)
+    poly_est = ppsignals(tt, unwrapped, order)
     

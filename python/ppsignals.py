@@ -35,7 +35,7 @@ def wrap_phase(phase):
     return phase - np.round(phase)
 
 def phase_diff(phase, delay=1):
-    phase_d = phase[:-delay] - phase[delay:]
+    phase_d = phase[delay:] - phase[:-delay] 
     return wrap_phase(phase_d)
 
 def centered_phase(in_data):
