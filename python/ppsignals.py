@@ -2,7 +2,14 @@ import numpy as np
 #pylint: disable=C0103
 
 def default_tstart(N, dt=1.):
-    return -(N-1)/2. * dt
+    """
+    Having it centered gives the lowest CRB, but on the other hand, it needs
+    to be an integer, otherwise the math for aliasing doesn't quite work since
+    it is based on the integer polynomials. This makes the CRB quite a bit more
+    painful to estimate, but it is pretty close, and for analysis we could just
+    use odd signal lengths
+    """
+    return int(-(N-1)/2.) * dt
 
 def sample_times(N, tstart=None, dt=1.):
     if tstart is None:
@@ -35,7 +42,7 @@ def wrap_phase(phase):
     return phase - np.round(phase)
 
 def phase_diff(phase, delay=1):
-    phase_d = phase[delay:] - phase[:-delay] 
+    phase_d = phase[delay:] - phase[:-delay]
     return wrap_phase(phase_d)
 
 def centered_phase(in_data):
@@ -51,6 +58,12 @@ def centered_phase(in_data):
     phase += mean_phase
     return phase
 
+def sig_gen(poly, N, magnitude=1, noise_var=0, tstart=None, dt=1.):
+    sig = poly_to_sig(poly, N, tstart, dt)*magnitude
+    noise = np.random.normal(0.0, np.sqrt(noise_var/2), sig.shape) + \
+            1j * np.random.normal(0.0, np.sqrt(noise_var/2), sig.shape)
+    sig += noise
+    return sig
 
 def unalias_poly(poly):
     """
@@ -98,3 +111,26 @@ def unalias_poly(poly):
         u[kk] = np.round((ystar[kk]-r)/R[kk, kk])
     poly -= np.dot(P, u)
     return poly
+
+def cramer_rao_bound(order, length, snr, radians=False, dt=1.):
+    """
+    Cramer Rao bound, only works if zero time is centered in the middle of
+    the signal
+
+    Taken from O'Shea "On Refining Polynomial Phase
+    Signal Parameter Estimates"
+
+    Also not too bad to derive on your own
+    """
+    D_inv = np.diag(1./(dt**np.arange(order+1)))
+    H_p1 = np.zeros((order+1, order+1))
+    for ii in range(order+1):
+        for jj in range(order+1):
+            if (ii+jj)%2 == 0:
+                H_p1[ii, jj] = 2*(length/2)**(ii+jj+1)/(ii+jj+1)
+
+    crb = 1./(2*(10.0**(0.1*snr)))*np.diag((D_inv.dot(np.linalg.solve(H_p1, D_inv))))
+    if not radians:
+        crb /= (2*np.pi)**2
+    crb = crb[::-1]
+    return crb
